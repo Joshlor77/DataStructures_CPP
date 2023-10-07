@@ -6,7 +6,6 @@
 #include "AbstractLinkedList.h"
 #include "LinkedListException.h"
 
-#include <iostream>
 using namespace std;
 
 #ifndef SRC_LINKEDLIST_H_
@@ -22,18 +21,21 @@ public:
 	LinkedList(DT data);
 	LinkedList(const LinkedList<DT>& list);
 	~LinkedList();
-	DT popfront();
-	DT popback();
-	DT remove(int index);
+	DT& pop();
+	DT& popfront();
+	DT& popback();
+	DT& remove(int index);
+	void push (DT data);
 	void pushfront(DT data);
 	void pushback(DT data);
 	void insert(DT data, int index);
 	int find(DT data);
 	int size();
-	DT get(int index);
+	DT& get(int index);
 	bool operator== (LinkedList<DT> a);
 	bool operator!= (LinkedList<DT> a);
-
+	void sort();
+	LinkedList<DT>& operator= (LinkedList<DT> a);
 };
 
 /*
@@ -54,18 +56,13 @@ LinkedList<DT>::LinkedList(DT data){
 }
 
 //Copy Constructor
-//Unoptimized
 template <class DT>
 LinkedList<DT>::LinkedList (const LinkedList<DT>& list){
-
-	LinkedList<DT>* temp = list._next;
-	_info = list._info;
-	_next = new LinkedList<DT>();
-
-	int size = temp->size();
-
-	for (int i = 0; i < size; i++){
-		_next->insert(temp->get(i), _next->size());
+	if (list._next == nullptr){
+		_next = nullptr;
+	} else {
+		_info = list._info;
+		_next = new LinkedList<DT>(*(list._next));
 	}
 }
 
@@ -91,12 +88,23 @@ LinkedList<DT>::~LinkedList(){
  * Finally, the LinkedList object which is pointed to by the copied pointer is deleted, then the store copy data is returned
  *
  */
+
 template <class DT>
-DT LinkedList<DT>::popfront(){
+DT& LinkedList<DT>::pop(){
+	try {
+		return popfront();
+	} catch (LinkedListIsEmptyException& e){
+		throw e;
+	}
+}
+
+template <class DT>
+DT& LinkedList<DT>::popfront(){
 	if (_next == nullptr){
 		throw LinkedListIsEmptyException();
 	}
-	DT toReturn = _info;
+
+	DT& toReturn = _info;
 	LinkedList<DT>* toDelete = _next;
 
 	_info = toDelete->_info;
@@ -113,7 +121,7 @@ DT LinkedList<DT>::popfront(){
  * When the function reaches a Linked List object that points to an empty Linked List, popfront() is called and returned.
  */
 template <class DT>
-DT LinkedList<DT>::popback(){
+DT& LinkedList<DT>::popback(){
 	if (_next == nullptr) {
 		throw LinkedListIsEmptyException();
 	}
@@ -134,7 +142,7 @@ DT LinkedList<DT>::popback(){
  * When index = 0, popfront() is called and returned.
  */
 template <class DT>
-DT LinkedList<DT>::remove(int index){
+DT& LinkedList<DT>::remove(int index){
 	if (_next == nullptr){
 		throw LinkedListIsEmptyException();
 	}
@@ -146,6 +154,11 @@ DT LinkedList<DT>::remove(int index){
 	}
 	//If index == 0
 	return popfront();
+}
+
+template <class DT>
+void LinkedList<DT>::push(DT data){
+	pushfront(data);
 }
 
 template <class DT>
@@ -208,7 +221,8 @@ int LinkedList<DT>::size(){
 }
 
 template <class DT>
-DT LinkedList<DT>::get(int index){
+DT& LinkedList<DT>::get(int index){
+
 	if (index < 0 || index >= size()){
 		throw LinkedListOutofBoundsException();
 	}
@@ -220,20 +234,60 @@ DT LinkedList<DT>::get(int index){
 	return _info;
 }
 
+// Two Linked Lists are said to be equal if they contain the same elements in the same order
 template <class DT>
 bool LinkedList<DT>::operator== (LinkedList<DT> a) {
-	if (_info == a._info && _next == a._next){
+
+	//If either LinkedList is empty
+	if (_next == nullptr || a._next == nullptr){
+
+		//If only one LinkedList is empty
+		if ((_next == nullptr) != (a._next == nullptr)){
+			return false;
+		}
+		//If both LinkedLists are empty
 		return true;
 	}
+
+	//If both lists contain the same data, compare the next list for both lists
+	if (_info == a._info){
+		return *(_next) == *(a._next);
+	}
+	//If _info != a._info
 	return false;
 }
 
+// Two Linked Lists are said to be unequal if they do not contain the same elements in the same order
 template <class DT>
 bool LinkedList<DT>::operator!= (LinkedList<DT> a) {
-	if (_info != a._info || _next != a._next){
+
+	//If either LinkedList is empty
+	if (_next == nullptr || a._next == nullptr) {
+
+		//If both LinkedLists are empty
+		if ((_next == nullptr) == (a._next == nullptr)){
+			return false;
+		}
+		//If only one LinkedList is empty
 		return true;
 	}
-	return false;
+	//If both lists contain the same data, compare the next list for both lists
+	if (_info == a._info){
+		return *(_next) != *(a._next);
+	}
+	//If _info != a._info
+	return true;
+}
+
+template <class DT>
+LinkedList<DT>& LinkedList<DT>::operator= (LinkedList<DT> a) {
+
+	using std::swap;
+
+	swap(_info, a._info);
+	swap(_next, a._next);
+
+	return *this;
 }
 
 #endif /* SRC_LINKEDLIST_H_ */
